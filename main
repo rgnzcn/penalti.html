@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Penaltı Çekme Oyunu - Miyavlayan Beyaz Kedi</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+        #gameContainer {
+            text-align: center;
+        }
+        #gameCanvas {
+            border: 2px solid #000;
+            background-color: #27ae60; /* Çim efekti için */
+        }
+        #score {
+            font-size: 24px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+        <div id="score">Skor: 0</div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreDisplay = document.getElementById('score');
+
+        // Canvas boyutlarını ekran boyutuna göre ayarla
+        canvas.width = Math.min(window.innerWidth * 0.9, 600);
+        canvas.height = Math.min(window.innerHeight * 0.6, 400);
+
+        let score = 0;
+        let ball = { x: canvas.width / 2, y: canvas.height - 50, radius: 10, dx: 0, dy: 0, shot: false };
+        let catGoalkeeper = {
+            x: canvas.width / 2 - 30,
+            y: 50,
+            width: 60,
+            height: 80,
+            dx: 2,
+            frame: 0,
+            jump: 0,
+            jumping: false
+        };
+
+        let gameOver = false;
+
+        // Ses efektleri
+        const goalSound = new Audio('https://www.myinstants.com/media/sounds/goal.mp3');
+        const blockSound = new Audio('https://www.myinstants.com/media/sounds/whistle.mp3');
+        const meowSound = new Audio('https://www.myinstants.com/media/sounds/cat-meow.mp3');
+
+        function drawField() {
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(canvas.width * 0.33, 0, canvas.width * 0.33, canvas.height * 0.25); // Kale alanı
+            ctx.strokeStyle = '#000';
+            ctx.strokeRect(canvas.width * 0.33, 0, canvas.width * 0.33, canvas.height * 0.25); // Kale çizgisi
+        }
+
+        function drawBall() {
+            ctx.beginPath();
+            ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+            ctx.fillStyle = '#fff';
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+            ctx.fill();
+            ctx.stroke();
+            ctx.closePath();
+        }
+
+        function drawCatGoalkeeper() {
+            const { x, y, width, height, jump } = catGoalkeeper;
+            const adjustedY = y - jump;
+
+            // Kedi gövdesi
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(x, adjustedY, width, height);
+            ctx.strokeStyle = '#ddd';
+            ctx.strokeRect(x, adjustedY, width, height);
+
+            // Kafa
+            ctx.beginPath();
+            ctx.arc(x + width / 2, adjustedY - 15, 15, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.closePath();
+
+            // Gözler
+            ctx.fillStyle = '#00b7eb';
+            ctx.beginPath();
+            ctx.arc(x + 15, adjustedY - 10, 3, 0, Math.PI * 2);
+            ctx.arc(x + 45, adjustedY - 10, 3, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function update() {
+            if (ball.shot) {
+                ball.x += ball.dx;
+                ball.y += ball.dy;
+                ball.dy += 0.1;
+
+                if (ball.y < 0) { // Gol veya kurtarış
+                    if (ball.x > canvas.width * 0.33 && ball.x < canvas.width * 0.66) {
+                        if (!isCaught()) {
+                            score++;
+                            scoreDisplay.textContent = `Skor: ${score}`;
+                            goalSound.play().catch(() => {});
+                        } else {
+                            blockSound.play().catch(() => {});
+                            meow
